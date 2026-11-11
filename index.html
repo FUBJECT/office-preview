@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Office</title><link rel="stylesheet" href="./styles.css">
+<main>
+  <header>
+    <div class="identity">
+      <span class="logo-mark">o.</span>
+      <h1>Office</h1>
+      <span class="live-dot" id="live-dot" aria-label="本机"></span>
+    </div>
+    <nav aria-label="视图">
+      <button data-view="office" aria-pressed="true">办公室</button>
+      <button data-view="list" aria-pressed="false">列表</button>
+    </nav>
+    <div class="controls">
+      <select id="range" aria-label="显示时间范围" hidden>
+        <option value="recent">最近 3 天</option>
+        <option value="all">全部历史</option>
+      </select>
+      <button id="ambient-toggle" class="pill-btn" type="button" aria-pressed="true" title="开关全局环境光（夜间补光）">☀ 环境光</button>
+      <button id="customize-toggle" class="icon-btn" aria-pressed="false" aria-label="空间客制化装扮" title="空间客制化装扮">✦</button>
+      <button id="settings-open" class="icon-btn" aria-pressed="false" aria-label="空间与偏好" aria-controls="settings" title="空间与偏好">⚙</button>
+      <button id="refresh" class="icon-btn" aria-label="刷新" title="刷新">↻</button>
+    </div>
+  </header>
+
+  <div class="dashboard-bar">
+    <section class="stats" aria-label="本机实时感知总览" id="stats"></section>
+    <time id="updated"></time>
+  </div>
+
+  <div id="error" class="error-box" role="alert"></div>
+
+  <section id="office" aria-label="3D 办公室">
+    <canvas aria-label="可旋转缩放的 3D 办公室"></canvas>
+    <div class="office-labels"></div>
+
+    <aside id="inspector" class="inspector" hidden aria-label="角色近身状态卡">
+      <div class="inspector-head">
+        <div class="inspector-title-wrap">
+          <span class="inspector-dot" id="ins-dot"></span>
+          <h2 id="ins-name">Codex</h2>
+          <span class="ins-source-tag" id="ins-source">待命</span>
+        </div>
+        <div class="inspector-nav">
+          <button type="button" id="ins-follow" class="follow-pill" aria-pressed="true">跟随中</button>
+          <button type="button" id="ins-close" class="mini-icon" aria-label="关闭面板" title="关闭">×</button>
+        </div>
+      </div>
+
+      <div class="inspector-body" id="ins-body">
+        <div class="ins-live-strip">
+          <div class="ins-activity-row">
+            <span class="ins-activity-text" id="ins-activity">正在工位推进</span>
+            <span class="ins-heartbeat" id="ins-heartbeat">待命</span>
+          </div>
+          <div class="ins-dirs" id="ins-dirs"></div>
+        </div>
+
+        <div class="ins-telemetry-grid">
+          <div class="ins-tele-cell">
+            <span class="tele-label">推进战线</span>
+            <strong id="ins-lines">0 条线</strong>
+            <small id="ins-sessions">未启动</small>
+          </div>
+          <div class="ins-tele-cell">
+            <span class="tele-label">工作时长</span>
+            <strong id="ins-work-dur">0m</strong>
+            <small id="ins-today-dur">累计 0m</small>
+          </div>
+          <div class="ins-tele-cell">
+            <span class="tele-label">进入时长</span>
+            <strong id="ins-enter-dur">未驻留</strong>
+            <small id="ins-enter-sub">未开启</small>
+          </div>
+        </div>
+
+        <div class="ins-vitals" id="ins-vitals">
+          <div class="vital-row" id="ins-vital-row-1">
+            <span id="ins-vital-1-label">5h 余量</span>
+            <div class="vital-track"><i id="ins-focus-bar"></i></div>
+            <strong id="ins-focus-val">0%</strong>
+          </div>
+          <div class="vital-row" id="ins-vital-row-2">
+            <span id="ins-vital-2-label">7d 余量</span>
+            <div class="vital-track energy"><i id="ins-energy-bar"></i></div>
+            <strong id="ins-energy-val">0%</strong>
+          </div>
+        </div>
+
+        <div id="ins-active-box" class="ins-section" hidden></div>
+      </div>
+    </aside>
+
+    <div class="camera-bar" role="group" aria-label="镜头">
+      <button data-camera="overview">全景</button>
+      <button data-camera="boss" aria-pressed="false">老板视角</button>
+      <button data-camera="patrol">巡视一圈</button>
+      <button data-camera="idle">抓摸鱼</button>
+      <span></span>
+      <button data-camera="auto" aria-pressed="false">自动转</button>
+    </div>
+  </section>
+
+  <div class="board" id="board" hidden></div>
+</main>
+
+<dialog id="task-dialog" aria-labelledby="detail-title">
+  <div class="dialog-head">
+    <h2 id="detail-title">派单详情</h2>
+    <button id="close" aria-label="关闭详情">×</button>
+  </div>
+  <div id="detail" aria-live="polite"></div>
+</dialog>
+
+<section id="settings" class="bottom-dock" hidden role="region" aria-labelledby="settings-title">
+  <div class="dock-head">
+    <div class="dock-head-left">
+      <h2 id="settings-title">空间与偏好</h2>
+      <div class="settings-tabs" role="tablist" aria-label="设置分类">
+        <button type="button" role="tab" data-settings-tab="scene" aria-selected="true">场景与光影</button>
+        <button type="button" role="tab" data-settings-tab="custom" aria-selected="false">空间客制化</button>
+        <button type="button" role="tab" data-settings-tab="display" aria-selected="false">显示与看板</button>
+      </div>
+    </div>
+    <div class="dock-head-right">
+      <div id="dock-custom-tools" class="dock-custom-tools" hidden>
+        <button type="button" id="settings-pick-btn" class="dock-tool-btn" aria-pressed="false" title="开启后直接点击场景中的桌椅/地板/绿植即可跳到对应分类">✦ 点选场景家具</button>
+        <button type="button" id="custom-reset" class="dock-tool-btn ghost-btn">恢复默认</button>
+      </div>
+      <button type="button" id="settings-close" class="mini-icon" aria-label="收起面板" title="收起 (Esc)">×</button>
+    </div>
+  </div>
+
+  <form id="settings-form" class="dock-body">
+    <div class="settings-pane dock-grid-scene" data-pane="scene">
+      <section class="dock-col">
+        <h3>主题预设</h3>
+        <div id="theme-cards" class="theme-cards" role="radiogroup" aria-label="主题"></div>
+      </section>
+
+      <section class="dock-col">
+        <h3>时段与自然光</h3>
+        <label class="switch-row"><span>跟随现实时间</span><input name="followTime" type="checkbox" role="switch"></label>
+        <fieldset id="phase-options" class="segments" aria-label="场景时段">
+          <label><input type="radio" name="phase" value="day">白天</label>
+          <label><input type="radio" name="phase" value="dusk">黄昏</label>
+          <label><input type="radio" name="phase" value="night">晚上</label>
+        </fieldset>
+        <div class="slider-row">
+          <label for="transition"><span>过渡时长</span><output id="transition-value"></output></label>
+          <input id="transition" name="transition" type="range" min="0" max="20" step="1">
+        </div>
+      </section>
+
+      <section class="dock-col">
+        <h3>室内照明与窗景</h3>
+        <div class="dock-switches-inline">
+          <label class="switch-row"><span>全局环境光</span><input name="ambientLight" type="checkbox" role="switch"></label>
+          <label class="switch-row"><span>窗外景观</span><input name="city" type="checkbox" role="switch"></label>
+        </div>
+        <div class="dock-sliders-inline">
+          <div class="slider-row">
+            <label for="ceiling"><span>顶灯亮度</span><output id="ceiling-value"></output></label>
+            <input id="ceiling" name="ceiling" type="range" min="0" max="1" step=".05">
+          </div>
+          <div class="slider-row">
+            <label for="monitor"><span>屏幕微光</span><output id="monitor-value"></output></label>
+            <input id="monitor" name="monitor" type="range" min="0" max="1" step=".05">
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="settings-pane dock-pane-custom" data-pane="custom" hidden>
+      <div id="custom-subtabs" class="custom-subtabs" role="tablist" aria-label="家具与空间分类"></div>
+      <div id="custom-slots-container" class="custom-stage"></div>
+    </div>
+
+    <div class="settings-pane dock-grid-display" data-pane="display" hidden>
+      <section class="dock-col">
+        <h3>场景信息层</h3>
+        <div class="dock-switches-inline">
+          <label class="switch-row"><span>头顶名字牌</span><input name="names" type="checkbox" role="switch"></label>
+          <label class="switch-row"><span>巡逻 Bot</span><input name="showBots" type="checkbox" role="switch"></label>
+          <label class="switch-row"><span>自动环绕</span><input name="autoRotate" type="checkbox" role="switch"></label>
+        </div>
+        <div class="field-stack">
+          <span class="field-title">状态气泡提醒</span>
+          <fieldset class="segments" aria-label="头顶徽章">
+            <label><input type="radio" name="badges" value="off">关闭</label>
+            <label><input type="radio" name="badges" value="events">关键节点</label>
+            <label><input type="radio" name="badges" value="always">常驻</label>
+          </fieldset>
+        </div>
+      </section>
+
+      <section class="dock-col">
+        <h3>渲染画质与同步</h3>
+        <div class="field-stack">
+          <span class="field-title">画质档位</span>
+          <fieldset class="segments" aria-label="画质">
+            <label><input name="quality" type="radio" value="low">省电</label>
+            <label><input name="quality" type="radio" value="standard">标准</label>
+            <label><input name="quality" type="radio" value="high">高</label>
+          </fieldset>
+        </div>
+        <div class="slider-row">
+          <label for="refresh-interval"><span>台账轮询间隔</span><output id="refresh-value"></output></label>
+          <input id="refresh-interval" name="refresh" type="range" min="15" max="300" step="15">
+        </div>
+      </section>
+
+      <section class="dock-col">
+        <h3>入驻品牌角色</h3>
+        <div id="agent-options" class="agent-chips"></div>
+      </section>
+    </div>
+  </form>
+</section>
+
+<script>window.__OFFICE_DEMO__=true;window.__OFFICE_MASCOTS__=["claude.glb","codex.glb","grokbot.glb","muse.glb"];</script>
+<script type="module" src="./app.js"></script>
